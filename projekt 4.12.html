@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="cs">
+    <head>
+        <meta charset="utf-8" />
+        <title>Fotbalová hra</title>
+        <style>
+            body {
+                background: #0a5c0a;
+                margin: 0;
+                font-family: Arial, sans-serif;
+            }
+            #stadion {
+                width: 680px;
+                margin: 30px auto;
+            }
+            #hud {
+                background: rgba(0, 0, 0, 0.5);
+                color: #fff;
+                padding: 8px;
+                border-radius: 6px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            #kupBtn {
+                background: #ffd700;
+                border: 0;
+                padding: 6px 12px;
+                border-radius: 6px;
+                cursor: pointer;
+                font-weight: bold;
+                color: #0a5c0a;
+            }
+            #hriste {
+                width: 600px;
+                height: 400px;
+                margin: 12px auto 0;
+                border: 5px solid #fff;
+                background: linear-gradient(#0a5c0a, #0f7c0f);
+                position: relative;
+                overflow: hidden;
+            }
+            .tribuna {
+                position: absolute;
+                top: 0;
+                width: 40px;
+                height: 100%;
+                background: repeating-linear-gradient(
+                    to bottom,
+                    #444 0,
+                    #444 10px,
+                    #666 10px,
+                    #666 20px
+                );
+            }
+            #tribL {
+                left: 0;
+            }
+            #tribP {
+                right: 0;
+            }
+            #hrac {
+                position: absolute;
+                width: 30px;
+                height: 30px;
+                background: blue;
+                border-radius: 50%;
+                left: 50px;
+                top: 350px;
+            }
+            #mic {
+                position: absolute;
+                width: 20px;
+                height: 20px;
+                background: white;
+                border-radius: 50%;
+                left: 60px;
+                top: 150px;
+                cursor: pointer;
+            }
+            #branka {
+                position: absolute;
+                left: 400px;
+                top: 120px;
+                width: 160px;
+                height: 120px;
+                border: 4px solid #fff;
+                border-top: 8px solid #fff;
+                background-image: linear-gradient(white 2px, transparent 2px),
+                    linear-gradient(90deg, white 2px, transparent 2px);
+                background-size: 20px 20px;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="stadion">
+            <div id="hud">
+                <div>Body: <span id="body">100</span></div>
+                <button id="kupBtn">Koupit +50</button>
+            </div>
+
+            <div id="hriste">
+                <div id="tribL" class="tribuna"></div>
+                <div id="hrac"></div>
+                <div id="mic"></div>
+                <div id="branka"></div>
+                <div id="tribP" class="tribuna"></div>
+            </div>
+        </div>
+
+        <script>
+            const mic = document.getElementById("mic"),
+                hrac = document.getElementById("hrac"),
+                branka = document.getElementById("branka"),
+                bodyEl = document.getElementById("body"),
+                kupBtn = document.getElementById("kupBtn");
+
+            let bodyPoints = 100;
+            let px = 50,
+                py = 350;
+            let bx = 60,
+                by = 150,
+                vx = 0,
+                vy = 0;
+            const gravity = 0.15,
+                friction = 0.99,
+                bounce = 0.8;
+
+            kupBtn.addEventListener("click", () => {
+                bodyPoints += 50;
+                bodyEl.textContent = bodyPoints;
+                const col = [
+                    "#FF0000",
+                    "#00FF00",
+                    "#0000FF",
+                    "#FFFF00",
+                    "#FF00FF",
+                    "#00FFFF",
+                ];
+                mic.style.background =
+                    col[Math.floor(Math.random() * col.length)];
+            });
+
+            mic.addEventListener("click", (e) => {
+                const r = mic.getBoundingClientRect();
+                vx = ((e.clientX - r.left - 10) / 50) * 12;
+                vy = ((e.clientY - r.top - 10) / 50) * 12 - 8;
+            });
+
+            let keys = {};
+            window.addEventListener("keydown", (e) => (keys[e.key] = true));
+            window.addEventListener("keyup", (e) => (keys[e.key] = false));
+
+            function loop() {
+                const s = 5;
+                if (keys["ArrowLeft"] || keys["a"]) px = Math.max(10, px - s);
+                if (keys["ArrowRight"] || keys["d"]) px = Math.min(570, px + s);
+                if (keys["ArrowUp"] || keys["w"]) py = Math.max(10, py - s);
+                if (keys["ArrowDown"] || keys["s"]) py = Math.min(370, py + s);
+                hrac.style.left = px + "px";
+                hrac.style.top = py + "px";
+
+                vy += gravity;
+                bx += vx;
+                by += vy;
+                vx *= friction;
+                vy *= friction;
+
+                if (by >= 375) {
+                    by = 375;
+                    vy *= -bounce;
+                    if (Math.abs(vy) < 1) vy = 0;
+                }
+                if (bx <= 0) {
+                    bx = 0;
+                    vx *= -bounce;
+                }
+                if (bx >= 580) {
+                    bx = 580;
+                    vx *= -bounce;
+                }
+                if (by <= 0) {
+                    by = 0;
+                    vy *= -bounce;
+                }
+
+                const dx = bx - px,
+                    dy = by - py,
+                    dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 40) {
+                    const a = Math.atan2(dy, dx);
+                    vx = Math.cos(a) * 10;
+                    vy = Math.sin(a) * 10 - 5;
+                    bx += Math.cos(a) * 5;
+                    by += Math.sin(a) * 5;
+                }
+
+                mic.style.left = bx + "px";
+                mic.style.top = by + "px";
+
+                const mr = mic.getBoundingClientRect(),
+                    br = branka.getBoundingClientRect();
+                if (
+                    mr.left > br.left &&
+                    mr.right < br.right &&
+                    mr.top > br.top &&
+                    mr.bottom < br.bottom
+                ) {
+                    alert("GÓÓÓL!");
+                    bx = 60;
+                    by = 150;
+                    vx = 0;
+                    vy = 0;
+                    mic.style.background = "white";
+                }
+
+                requestAnimationFrame(loop);
+            }
+            loop();
+        </script>
+    </body>
+</html>
