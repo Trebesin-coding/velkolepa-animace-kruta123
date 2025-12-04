@@ -1,1 +1,60 @@
-Sem patří použité prompty
+Zadával jsem prompty pro hýbání míče, což je nezbytné k mé hře. Také k obarvení míče a nakupování pointů. Používal jsem Gemini, Copilot.
+Prompt1: Udělej kód aby se mi míč hýbal. Následovně kód vysvětli.
+// Kód
+let bx = 60, by = 150, vx = 0, vy = 0;
+const gravity = 0.15, friction = 0.99, bounce = 0.8;
+
+mic.addEventListener("click", (e) => {
+    const r = mic.getBoundingClientRect();
+    vx = ((e.clientX - r.left - 10) / 50) * 12;
+    vy = ((e.clientY - r.top - 10) / 50) * 12 - 8;
+});
+
+function loop() {
+    // gravitace a pohyb
+    vy += gravity;
+    bx += vx;
+    by += vy;
+    vx *= friction;
+    vy *= friction;
+
+    // nárazy na zem a zdi
+    if (by >= 375) { by = 375; vy *= -bounce; if (Math.abs(vy) < 1) vy = 0; }
+    if (bx <= 0)    { bx = 0;    vx *= -bounce; }
+    if (bx >= 580)  { bx = 580;  vx *= -bounce; }
+    if (by <= 0)    { by = 0;    vy *= -bounce; }
+
+    // srážka s hráčem
+    const dx = bx - px, dy = by - py, dist = Math.sqrt(dx*dx + dy*dy);
+    if (dist < 40) {
+        const a = Math.atan2(dy, dx);
+        vx = Math.cos(a) * 10;
+        vy = Math.sin(a) * 10 - 5;
+        bx += Math.cos(a) * 5;
+        by += Math.sin(a) * 5;
+    }
+
+    // aktualizace pozice v DOM
+    mic.style.left = bx + "px";
+    mic.style.top  = by + "px";
+
+    requestAnimationFrame(loop);
+}
+loop();
+-
+-
+Vysvětlení:
+
+bx, by = pozice míče; vx, vy = rychlost (vektory).
+Kliknutí na míč nastaví počáteční vx a vy podle směru kliknutí (udělá „kop“).
+Ve funkci loop:
+vy += gravity — přidá gravitaci (míč padá).
+bx += vx, by += vy — posune míč podle rychlosti.
+vx *= friction, vy *= friction — zpomalování (odpor).
+Kontroly pro nárazy s hranami a zemí — mění směr (bounce).
+Pokud je míč blízko hráče (dist < 40), vypočte se úhel (Math.atan2) a nastaví se nová rychlost tak, aby míč „odrazil“ od hráče.
+mic.style.left/top aktualizují CSS, aby se míč vizuálně přesunul.
+requestAnimationFrame(loop) spouští smyčku znovu (plynulý pohyb).
+-
+-
+background a tribuny jsem udělal sám. AI jsem se ptal pokud jde na hře něco vylepšit, ale nenašel jsem něco co by dávalo smysl.
